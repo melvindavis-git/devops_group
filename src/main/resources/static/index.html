@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pensionat - Översikt</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>
+    <nav>
+      <span class="brand">Pensionat</span>
+      <a href="/index.html" data-nav>Start</a>
+      <a href="/customers.html" data-nav>Kunder</a>
+      <a href="/rooms.html" data-nav>Rum</a>
+      <a href="/bookings.html" data-nav>Bokningar</a>
+      <a
+        href="/leave-review.html"
+        class="nav-icon"
+        title="Lämna en recension"
+        aria-label="Lämna en recension"
+        style="margin-left: auto; opacity: 0.55; font-size: 0.8rem; text-decoration: none; color: var(--text);"
+        >✎</a
+      >
+    </nav>
+  </header>
+  <main>
+    <h1>Välkommen</h1>
+    <p class="muted">Hantera kunder, rum och bokningar för pensionatet.</p>
+
+    <div class="form-row" style="margin-top: 1.5rem;">
+      <div class="card" style="flex:1; min-width:220px;">
+        <h2 style="margin-top:0;">Kunder</h2>
+        <p class="muted">Se, registrera och redigera kunder.</p>
+        <a class="btn" href="/customers.html">Till kunder</a>
+      </div>
+      <div class="card" style="flex:1; min-width:220px;">
+        <h2 style="margin-top:0;">Rum</h2>
+        <p class="muted">Se alla rum på pensionatet.</p>
+        <a class="btn" href="/rooms.html">Till rum</a>
+      </div>
+      <div class="card" style="flex:1; min-width:220px;">
+        <h2 style="margin-top:0;">Bokningar</h2>
+        <p class="muted">Se, skapa och hantera bokningar.</p>
+        <a class="btn" href="/bookings.html">Till bokningar</a>
+      </div>
+    </div>
+  </main>
+  <script src="/js/api.js"></script>
+</body>
+</html>

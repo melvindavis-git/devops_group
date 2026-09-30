@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reviews-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reviews-db
+  template:
+    metadata:
+      labels:
+        app: reviews-db
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+            - name: MYSQL_USER
+              value: reviews_user
+            - name: MYSQL_PASSWORD
+              value: reviews_password
+            - name: MYSQL_DATABASE
+              value: pensionat_reviews
+          ports:
+            - containerPort: 3306
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: reviews-db
+spec:
+  selector:
+    app: reviews-db
+  ports:
+    - port: 3306
+      targetPort: 3306
+
+

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pensionat - Bokningar</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>
+    <nav>
+      <span class="brand">Pensionat</span>
+      <a href="/index.html" data-nav>Start</a>
+      <a href="/customers.html" data-nav>Kunder</a>
+      <a href="/rooms.html" data-nav>Rum</a>
+      <a href="/bookings.html" data-nav>Bokningar</a>
+      <a
+        href="/leave-review.html"
+        class="nav-icon"
+        title="Lämna en recension"
+        aria-label="Lämna en recension"
+        style="margin-left: auto; opacity: 0.55; font-size: 0.8rem; text-decoration: none; color: var(--text);"
+        >✎</a
+      >
+    </nav>
+  </header>
+  <main>
+    <h1>Bokningar</h1>
+    <div id="alert"></div>
+
+    <div class="toolbar">
+      <span class="muted" id="count"></span>
+      <a class="btn" href="/book-room.html">Ny bokning</a>
+    </div>
+
+    <div id="tableWrap"></div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const alertBox = document.getElementById("alert");
+    const tableWrap = document.getElementById("tableWrap");
+    const count = document.getElementById("count");
+
+    async function load() {
+      try {
+        const bookings = await Api.get("/api/bookings", { 500: "Tjänsten för bokningar kan ej nås just nu." });
+
+        count.textContent = `${bookings.length} bokning${bookings.length === 1 ? "" : "ar"}`;
+
+        if (!bookings.length) {
+          tableWrap.innerHTML = `<div class="empty">Inga bokningar ännu.</div>`;
+          return;
+        }
+
+        tableWrap.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Rum</th>
+                <th>Kund</th>
+                <th>Från</th>
+                <th>Till</th>
+                <th>Extrasängar</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${bookings.map(b => `
+                <tr>
+                  <td data-label="Rum">${b.room ? escapeHtml(b.room.nr) + (b.room.doubleRoom ? " (dubbel)" : " (enkel)") : "-"}</td>
+                  <td data-label="Kund">${escapeHtml(b.customerName || "Ej tillgänglig")}</td>
+                  <td data-label="Från">${escapeHtml(b.startDate)}</td>
+                  <td data-label="Till">${escapeHtml(b.endDate)}</td>
+                  <td data-label="Extrasängar">${b.extraBeds ?? 0}</td>
+                  <td data-label="">
+                    <div class="actions">
+                      <a class="btn btn-secondary btn-sm" href="/edit-booking.html?id=${b.id}">Redigera</a>
+                      <button class="btn-danger btn-sm" data-delete="${b.id}">Ta bort</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+
+        tableWrap.querySelectorAll("[data-delete]").forEach(btn => {
+          btn.addEventListener("click", () => deleteBooking(btn.dataset.delete));
+        });
+      } catch (err) {
+        showAlert(alertBox, err.message);
+      }
+    }
+
+    async function deleteBooking(id) {
+      if (!confirm("Ta bort denna bokning?")) return;
+      try {
+        await Api.delete(`/api/bookings/${id}`, { 500: "Tjänsten för bokningar kan ej nås just nu." });
+        showAlert(alertBox, "Bokningen togs bort.", "success");
+        load();
+      } catch (err) {
+        showAlert(alertBox, err.message);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

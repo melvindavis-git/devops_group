@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pensionat - Redigera bokning</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>
+    <nav>
+      <span class="brand">Pensionat</span>
+      <a href="/index.html" data-nav>Start</a>
+      <a href="/customers.html" data-nav>Kunder</a>
+      <a href="/rooms.html" data-nav>Rum</a>
+      <a href="/bookings.html" data-nav>Bokningar</a>
+      <a
+        href="/leave-review.html"
+        class="nav-icon"
+        title="Lämna en recension"
+        aria-label="Lämna en recension"
+        style="margin-left: auto; opacity: 0.55; font-size: 0.8rem; text-decoration: none; color: var(--text);"
+        >✎</a
+      >
+    </nav>
+  </header>
+  <main>
+    <h1>Redigera bokning</h1>
+    <div id="alert"></div>
+
+    <form id="form" class="card" hidden>
+      <p class="muted" id="roomInfo"></p>
+      <div class="form-row">
+        <label>
+          Incheckning
+          <input type="date" name="startDate" required />
+        </label>
+        <label>
+          Utcheckning
+          <input type="date" name="endDate" required />
+        </label>
+      </div>
+      <div class="actions">
+        <button type="submit">Spara ändringar</button>
+        <a class="btn btn-secondary" href="/bookings.html">Avbryt</a>
+      </div>
+    </form>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const alertBox = document.getElementById("alert");
+    const form = document.getElementById("form");
+    const roomInfo = document.getElementById("roomInfo");
+    const id = qs("id");
+
+    // There's no GET /api/bookings/{id} endpoint, so we load the full
+    // list and pick out the one we need.
+    async function load() {
+      if (!id) {
+        showAlert(alertBox, "Inget bokning-id angivet.");
+        return;
+      }
+      try {
+        const bookings = await Api.get("/api/bookings", { 500: "Tjänsten för bokningar kan ej nås just nu." });
+        const booking = bookings.find(b => String(b.id) === String(id));
+        if (!booking) {
+          showAlert(alertBox, "Hittade ingen bokning med det id:t.");
+          return;
+        }
+        roomInfo.textContent = booking.room
+          ? `Rum ${booking.room.nr}${booking.room.isDoubleRoom ? " (dubbelrum)" : ""}`
+          : "";
+        form.startDate.value = booking.startDate;
+        form.endDate.value = booking.endDate;
+        form.hidden = false;
+      } catch (err) {
+        showAlert(alertBox, err.message);
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        await Api.put(
+          `/api/bookings/${id}`,
+          {
+            startDate: form.startDate.value,
+            endDate: form.endDate.value,
+          },
+          { 500: "Tjänsten för bokningar kan ej nås just nu." }
+        );
+        window.location.href = "/bookings.html";
+      } catch (err) {
+        showAlert(alertBox, err.message);
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>

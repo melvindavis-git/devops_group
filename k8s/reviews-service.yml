@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reviews-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reviews-service
+  template:
+    metadata:
+      labels:
+        app: reviews-service
+    spec:
+      containers:
+        - name: reviews-service
+          image: reviews-service
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: DB_HOST
+              value: "reviews-db"
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: "pensionat_reviews"
+            - name: DB_USER
+              value: "reviews_user"
+            - name: DB_PASSWORD
+              value: "reviews_password"
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: reviews-service
+spec:
+  selector:
+    app: reviews-service
+  ports:
+    - port: 8080
+      targetPort: 8080

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pensionat - Kunder</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>
+    <nav>
+      <span class="brand">Pensionat</span>
+      <a href="/index.html" data-nav>Start</a>
+      <a href="/customers.html" data-nav>Kunder</a>
+      <a href="/rooms.html" data-nav>Rum</a>
+      <a href="/bookings.html" data-nav>Bokningar</a>
+      <a
+        href="/leave-review.html"
+        class="nav-icon"
+        title="Lämna en recension"
+        aria-label="Lämna en recension"
+        style="margin-left: auto; opacity: 0.55; font-size: 0.8rem; text-decoration: none; color: var(--text);"
+        >✎</a
+      >
+    </nav>
+  </header>
+  <main>
+    <h1>Kunder</h1>
+    <div id="alert"></div>
+
+    <div class="toolbar">
+      <span class="muted" id="count"></span>
+      <a class="btn" href="/register-customer.html">Registrera ny kund</a>
+    </div>
+
+    <div id="tableWrap"></div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const alertBox = document.getElementById("alert");
+    const tableWrap = document.getElementById("tableWrap");
+    const count = document.getElementById("count");
+
+    async function load() {
+      try {
+        const customers = await Api.get("/api/customers", {
+          400: "Kunde inte hämta kundlistan just nu.",
+          500: "Tjänsten för kunder kan ej nås just nu.",
+        });
+        count.textContent = `${customers.length} kund${customers.length === 1 ? "" : "er"}`;
+
+        if (!customers.length) {
+          tableWrap.innerHTML = `<div class="empty">Inga kunder registrerade ännu.</div>`;
+          return;
+        }
+
+        tableWrap.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Namn</th>
+                <th>E-post</th>
+                <th>Telefon</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${customers.map(c => `
+                <tr>
+                  <td data-label="Namn">${escapeHtml(c.name)}</td>
+                  <td data-label="E-post">${escapeHtml(c.email)}</td>
+                  <td data-label="Telefon">${escapeHtml(c.phone)}</td>
+                  <td data-label="">
+                    <div class="actions">
+                      <a class="btn btn-secondary btn-sm" href="/edit-customer.html?id=${c.id}">Redigera</a>
+                      <button class="btn-danger btn-sm" data-delete="${c.id}">Ta bort</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+
+        tableWrap.querySelectorAll("[data-delete]").forEach(btn => {
+          btn.addEventListener("click", () => deleteCustomer(btn.dataset.delete));
+        });
+      } catch (err) {
+        showAlert(alertBox, err.message);
+      }
+    }
+
+    async function deleteCustomer(id) {
+      if (!confirm("Ta bort denna kund?")) return;
+      try {
+        await Api.delete(`/api/customers/delete/${id}`, {
+          409: "Kund har en bokning, kan ej tas bort.",
+          400: "Kunden kunde inte hittas eller är redan borttagen.",
+        });
+        showAlert(alertBox, "Kunden togs bort.", "success");
+        load();
+      } catch (err) {
+        showAlert(alertBox, err.message);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

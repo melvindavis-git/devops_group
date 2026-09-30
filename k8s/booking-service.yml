@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: booking-service
+  template:
+    metadata:
+      labels:
+        app: booking-service
+    spec:
+      containers:
+        - name: booking-service
+          image: booking-service
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: DB_HOST
+              value: "booking-db"
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: "pensionat_booking"
+            - name: DB_USER
+              value: "booking_user"
+            - name: DB_PASSWORD
+              value: "booking_password"
+            - name: CUSTOMER_SERVICE_URL
+              value: http://customer-service:8080/
+            - name: REVIEWS_SERVICE_URL
+              value: http://reviews-service:8080/
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: booking-service
+spec:
+  selector:
+    app: booking-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+

@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test_and_build:
+    runs-on: ${{matrix.os}}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        java: [21]
+
+    # When not using test containers:
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: bookingdb
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up java environment
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{matrix.java}}
+          distribution: "temurin"
+          cache: "maven"
+
+      - name: Test with Maven
+        run: mvn test
+
+      - name: Build with Maven
+        run: mvn -B package -DskipTests
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t mndavis/booking:latest .
+
+      - name: Push Docker image
+        run: docker push mndavis/booking:latest
+
+#      - name: Start the whole system with docker
+#        run: docker compose up -d --build
+#
+#      - name: Wait for everything to start
+#        run: sleep 20
+
+        # When not using test containers:
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/bookingdb
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: root

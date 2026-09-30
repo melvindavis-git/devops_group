@@ -1,0 +1,71 @@
+services:
+  booking-db:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: pensionat_booking
+      MYSQL_USER: booking_user
+      MYSQL_PASSWORD: booking_password
+
+
+  customer-db:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: pensionat_customer
+      MYSQL_USER: customer_user
+      MYSQL_PASSWORD: customer_password
+
+  reviews-db:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: pensionat_reviews
+      MYSQL_USER: reviews_user
+      MYSQL_PASSWORD: reviews_password
+
+  booking-service:
+    build: .
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: booking-db
+      DB_PORT: 3306
+      DB_NAME: pensionat_booking
+      DB_USER: booking_user
+      DB_PASSWORD: booking_password
+      CUSTOMER_SERVICE_URL: http://customer-service:8080
+      REVIEWS_SERVICE_URL: http://reviews-service:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - booking-db
+
+  customer-service:
+    build: ../b2_pensionat_customer
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: customer-db
+      DB_PORT: 3306
+      DB_NAME: pensionat_customer
+      DB_USER: customer_user
+      DB_PASSWORD: customer_password
+
+    ports:
+      - "8081:8080"
+    depends_on:
+      - customer-db
+
+
+  reviews-service:
+    build: ../b2_pensionat_reviews
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: reviews-db
+      DB_PORT: 3306
+      DB_NAME: pensionat_reviews
+      DB_USER: reviews_user
+      DB_PASSWORD: reviews_password
+    ports:
+      - "8082:8080"
+    depends_on:
+      - reviews-db

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pensionat - Redigera kund</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>
+    <nav>
+      <span class="brand">Pensionat</span>
+      <a href="/index.html" data-nav>Start</a>
+      <a href="/customers.html" data-nav>Kunder</a>
+      <a href="/rooms.html" data-nav>Rum</a>
+      <a href="/bookings.html" data-nav>Bokningar</a>
+      <a
+        href="/leave-review.html"
+        class="nav-icon"
+        title="Lämna en recension"
+        aria-label="Lämna en recension"
+        style="margin-left: auto; opacity: 0.55; font-size: 0.8rem; text-decoration: none; color: var(--text);"
+        >✎</a
+      >
+    </nav>
+  </header>
+  <main>
+    <h1>Redigera kund</h1>
+    <div id="alert"></div>
+
+    <form id="form" class="card" hidden>
+      <input type="hidden" name="id" />
+      <label>
+        Namn
+        <input type="text" name="name" required minlength="2" maxlength="20" />
+      </label>
+      <label>
+        E-post
+        <input type="email" name="email" required minlength="10" maxlength="40" />
+      </label>
+      <label>
+        Telefon
+        <input type="tel" name="phone" required minlength="2" maxlength="20" />
+      </label>
+      <div class="actions">
+        <button type="submit">Spara ändringar</button>
+        <a class="btn btn-secondary" href="/customers.html">Avbryt</a>
+      </div>
+    </form>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const alertBox = document.getElementById("alert");
+    const form = document.getElementById("form");
+    const id = qs("id");
+
+    async function load() {
+      if (!id) {
+        showAlert(alertBox, "Inget kund-id angivet.");
+        return;
+      }
+      try {
+        const customer = await Api.get(`/api/customers/${id}`, {
+          404: "Kunden hittades inte.",
+          400: "Ogiltigt kund-id.",
+          500: "Tjänsten för kunder kan ej nås just nu.",
+        });
+        form.id.value = customer.id;
+        form.name.value = customer.name;
+        form.email.value = customer.email;
+        form.phone.value = customer.phone;
+        form.hidden = false;
+      } catch (err) {
+        showAlert(alertBox, err.message);
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      try {
+        await Api.putJson("/api/customers/edit", data, {
+          404: "Kunden hittades inte, det gick inte att spara.",
+          400: "Ogiltiga uppgifter, det gick inte att spara.",
+          500: "Tjänsten för kunder kan ej nås just nu.",
+        });
+        window.location.href = "/customers.html";
+      } catch (err) {
+        showAlert(alertBox, err.message);
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pensionat - Lämna en recension</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>
+    <nav>
+      <span class="brand">Pensionat</span>
+      <span class="muted" style="margin-left: auto;">Gästrecensioner</span>
+    </nav>
+  </header>
+  <main>
+    <h1>Lämna en recension</h1>
+    <p class="muted">Berätta för andra gäster vad du tyckte om ditt rum.</p>
+    <div id="alert"></div>
+
+    <form id="form" class="card">
+      <label>
+        Namn
+        <input type="text" name="name" required minlength="2" maxlength="20" />
+      </label>
+      <label>
+        Rum
+        <select name="roomId" required>
+          <option value="">Välj rum...</option>
+        </select>
+      </label>
+      <label>
+        Betyg
+        <select name="stars" required>
+          <option value="">Välj betyg...</option>
+          <option value="1">1 stjärna</option>
+          <option value="2">2 stjärnor</option>
+          <option value="3">3 stjärnor</option>
+          <option value="4">4 stjärnor</option>
+          <option value="5">5 stjärnor</option>
+        </select>
+      </label>
+      <label>
+        Kommentar
+        <textarea
+          name="reviewContent"
+          rows="4"
+          required
+          minlength="2"
+          maxlength="500"
+          style="font: inherit; padding: 0.5rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius); resize: vertical;"
+        ></textarea>
+      </label>
+      <div class="actions">
+        <button type="submit">Skicka recension</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const alertBox = document.getElementById("alert");
+    const form = document.getElementById("form");
+    const roomSelect = form.roomId;
+    const preselectedRoomId = qs("roomId");
+
+    async function loadRooms() {
+      try {
+        const rooms = await Api.get("/api/rooms", { 500: "Tjänsten för rum kan ej nås just nu." });
+        roomSelect.innerHTML =
+          `<option value="">Välj rum...</option>` +
+          rooms
+            .map(
+              (r) =>
+                `<option value="${r.id}">Rum ${escapeHtml(r.nr)}${r.doubleRoom ? " (dubbel)" : " (enkel)"}</option>`
+            )
+            .join("");
+        if (preselectedRoomId) roomSelect.value = preselectedRoomId;
+      } catch (err) {
+        showAlert(alertBox, err.message);
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      try {
+        await Api.postJson(
+          "/reviews",
+          {
+            roomId: Number(data.roomId),
+            reviewContent: data.reviewContent,
+            stars: Number(data.stars),
+            name: data.name,
+            createdAt: new Date().toISOString().slice(0, 10),
+          },
+          {
+            400: "Kunde inte skicka recensionen. Kontrollera uppgifterna.",
+            500: "Tjänsten för recensioner kan ej nås just nu.",
+          }
+        );
+        form.reset();
+        if (preselectedRoomId) roomSelect.value = preselectedRoomId;
+        showAlert(alertBox, "Tack för din recension!", "success");
+      } catch (err) {
+        showAlert(alertBox, err.message);
+      }
+    });
+
+    loadRooms();
+  </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pensionat - Rum</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>
+    <nav>
+      <span class="brand">Pensionat</span>
+      <a href="/index.html" data-nav>Start</a>
+      <a href="/customers.html" data-nav>Kunder</a>
+      <a href="/rooms.html" data-nav>Rum</a>
+      <a href="/bookings.html" data-nav>Bokningar</a>
+      <a
+        href="/leave-review.html"
+        class="nav-icon"
+        title="Lämna en recension"
+        aria-label="Lämna en recension"
+        style="margin-left: auto; opacity: 0.55; font-size: 0.8rem; text-decoration: none; color: var(--text);"
+        >✎</a
+      >
+    </nav>
+  </header>
+  <main>
+    <h1>Rum</h1>
+    <div id="alert"></div>
+    <div id="tableWrap"></div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const alertBox = document.getElementById("alert");
+    const tableWrap = document.getElementById("tableWrap");
+
+    function starLabel(stars) {
+      const n = Math.max(0, Math.min(5, Number(stars) || 0));
+      return "★".repeat(n) + "☆".repeat(5 - n);
+    }
+
+    async function load() {
+      try {
+        const rooms = await Api.get("/api/rooms", { 500: "Tjänsten för rum kan ej nås just nu." });
+        if (!rooms.length) {
+          tableWrap.innerHTML = `<div class="empty">Inga rum finns registrerade.</div>`;
+          return;
+        }
+
+        // Reviews come from a separate microservice and are supplementary —
+        // if that call fails, the room list itself should still render, with
+        // ratings marked as unavailable rather than shown as "no reviews".
+        let reviews = [];
+        let reviewsUnavailable = false;
+        try {
+          reviews = await Api.get("/reviews", { 500: "Tjänsten för recensioner kan ej nås just nu." });
+        } catch (err) {
+          reviewsUnavailable = true;
+          showAlert(alertBox, err.message);
+        }
+
+        const reviewsByRoom = {};
+        (reviews || []).forEach((rv) => {
+          (reviewsByRoom[rv.roomId] ??= []).push(rv);
+        });
+
+        tableWrap.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Rumsnr</th>
+                <th>Typ</th>
+                <th>Recensioner</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rooms
+                .map((r) => {
+                  const roomReviews = reviewsByRoom[r.id] || [];
+                  const avg = roomReviews.length
+                    ? roomReviews.reduce((sum, rv) => sum + rv.stars, 0) / roomReviews.length
+                    : 0;
+                  return `
+                <tr>
+                  <td data-label="Rumsnr">${escapeHtml(r.nr)}</td>
+                  <td data-label="Typ">${r.doubleRoom ? "Dubbelrum" : "Enkelrum"}</td>
+                  <td data-label="Recensioner">
+                    ${
+                      reviewsUnavailable
+                        ? `<span class="muted" title="Recensionstjänsten kunde inte nås">Ej tillgänglig</span>`
+                        : roomReviews.length
+                        ? `<button type="button" class="btn-secondary btn-sm" data-toggle="${r.id}">${avg.toFixed(1)} ★ (${roomReviews.length})</button>`
+                        : `<span class="muted">Inga recensioner</span>`
+                    }
+                  </td>
+                </tr>
+                <tr id="reviews-${r.id}" hidden>
+                  <td colspan="3">
+                    ${
+                      roomReviews.length
+                        ? `<ul style="margin:0; padding-left:1.1rem;">${roomReviews
+                            .map(
+                              (rv) => `
+                        <li>
+                          <strong>${escapeHtml(rv.name)}</strong> — ${starLabel(rv.stars)}
+                          <div class="muted">${escapeHtml(rv.reviewContent)} (${escapeHtml(rv.createdAt)})</div>
+                        </li>
+                      `
+                            )
+                            .join("")}</ul>`
+                        : ""
+                    }
+                  </td>
+                </tr>
+              `;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        `;
+
+        tableWrap.querySelectorAll("[data-toggle]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const row = document.getElementById(`reviews-${btn.dataset.toggle}`);
+            row.hidden = !row.hidden;
+          });
+        });
+      } catch (err) {
+        showAlert(alertBox, err.message);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>
