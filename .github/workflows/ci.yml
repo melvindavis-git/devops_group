@@ -62,10 +62,12 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:latest .
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:latest /
+          ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:${{github.sha}} .
 
       - name: Push Docker image
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:latest
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:latest /
+          ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:${{github.sha}}
 
 #      - name: Start the whole system with docker
 #        run: docker compose up -d --build
