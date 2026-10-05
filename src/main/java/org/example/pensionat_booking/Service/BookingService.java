@@ -9,6 +9,8 @@ import org.example.pensionat_booking.Model.Booking;
 import org.example.pensionat_booking.Model.Room;
 import org.example.pensionat_booking.Repository.BookingRepository;
 import org.example.pensionat_booking.Repository.RoomRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -29,6 +31,7 @@ public class BookingService {
     private final BookingRepository bookingRepo;
     private final RoomRepository roomRepo;
     private final CustomerServiceClient customerServiceClient;
+    private final Logger log = LoggerFactory.getLogger(BookingService.class);
 
 
     public BookingService(BookingRepository bookingRepo, RoomRepository roomRepo, CustomerServiceClient customerServiceClient) {
@@ -48,9 +51,12 @@ public class BookingService {
             try {
                 return customerServiceClient.getCustomerNameById(id);
             } catch (RuntimeException e) {
+                log.warn("Could not find customer with id: {}. {}", id, e.getMessage());
                 return "Ej tillgänligt";
             }
         }));
+
+        log.info("Returned {} bookings for {} customers.", bookings.size(), customerIds.size());
 
         return bookings.stream().
                 map(b -> new BookingResponseDTO(
@@ -84,17 +90,20 @@ public class BookingService {
         List<String> invalidInputs = new ArrayList<>();
 
         if (!canParseDate(startDate)) {
+            log.warn("Invalid start date");
             invalidInputs.add("Inget angivet startdatum.");
         }
 
         if (!canParseDate(endDate)) {
-            invalidInputs.add("Inget angivet slutdtdatum.");
+            log.warn("Invalid end date");
+            invalidInputs.add("Inget angivet slutdatum.");
         }
 
         LocalDate requestedStartDate = LocalDate.parse(startDate);
         LocalDate requestedEndDate = LocalDate.parse(endDate);
 
         if (requestedEndDate.isBefore(requestedStartDate)) {
+            log.warn("End date is before start date.");
             invalidInputs.add("Slutdatum kan inte vara innan startdatum.");
         }
 
@@ -117,6 +126,7 @@ public class BookingService {
 
         validRooms.removeIf(room -> room.isDoubleRoom() != doubleRoom);
 
+        log.info("Returned all valid rooms fitting requirements: {}", validRooms.size());
         return validRooms.stream().map(room -> RoomDTO.builder().id(room.getId()).nr(room.getNr()).isDoubleRoom(room.isDoubleRoom()).build()).toList();
     }
 
@@ -125,7 +135,14 @@ public class BookingService {
 
         if (extraBeds > 2) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max 2 extrasängar.");
 
-        CustomerDTO currentCustomer = customerServiceClient.getCustomerById(customerId).getBody();
+        CustomerDTO currentCustomer = null;
+        try {
+            currentCustomer = customerServiceClient.getCustomerById(customerId).getBody();
+        } catch (RuntimeException e) {
+            log.error("Could not find customer with id: {}", customerId);
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Kundtjänst ej tillgänglig");
+        }
+
         if (!canParseDate(startDate) && !canParseDate(endDate)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Måste ange både slut och startdatum.");
         }
@@ -135,10 +152,12 @@ public class BookingService {
         LocalDate requestedEndDate = LocalDate.parse(endDate);
 
         if (availableRooms == null) {
+            log.warn("Invalid date / dates");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Felaktig datum input.");
         }
 
         if (availableRooms.isEmpty()) {
+            log.warn("No available matching requirements.");
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Inga rum tillgängliga.");
         }
 
@@ -147,12 +166,14 @@ public class BookingService {
         Booking currentBooking = new Booking(room, currentCustomer.getId(), requestedStartDate, requestedEndDate);
         currentBooking.setExtraBeds(extraBeds);
         bookingRepo.save(currentBooking);
+        log.info("Customer {} created a booking with id: {}", currentBooking.getCustomerId(), currentBooking.getId());
         return BookingToBookingDTO(currentBooking);
     }
 
     public BookingDTO editBooking(Long bookingID, String startDate, String endDate) {
 
         if (!canParseDate(startDate) && !canParseDate(endDate)) {
+            log.warn("Wrong date syntax.");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Felaktig datum syntax.");
         }
 
@@ -160,12 +181,14 @@ public class BookingService {
         LocalDate requestedEndDate = LocalDate.parse(endDate);
 
         if (requestedEndDate.isBefore(requestedStartDate)) {
+            log.warn("End date before start date");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Slutdatum kan inte vara innan startdatum.");
         }
 
         boolean available = true;
 
         if (!bookingRepo.findById(bookingID).isPresent()) {
+            log.warn("Could not find booking with id: {}", bookingID);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ingen bokning hittades.");
         }
 
@@ -195,9 +218,11 @@ public class BookingService {
 
     public void removeBooking(Long bookingID) {
         if (!bookingRepo.existsById(bookingID)) {
+            log.warn("No booking with id: {}.", bookingID);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Bokningen hittades ej.");
         }
         bookingRepo.deleteById(bookingID);
+        log.info("Deleted booking with id: {}", bookingID);
     }
 
     public boolean canParseDate(String date) {
