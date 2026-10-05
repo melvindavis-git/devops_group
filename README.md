@@ -31,7 +31,10 @@ Code reviews are a nice addition to this type of workflow, but they don't add to
 
 ## Merge Conflicts
 
-> **TODO:** Add information about how we handle merge conflicts.
+For our merge conflict two of us both worked in the same file and changed the same variable in different branches.
+First one of the branches was merged into our main, when we then tried to merge the second branch we got a warning
+that there was a conflict between the two. We used the GitHub web editor to resolve the conflict by accepting the
+incoming changes.
 
 ## Rollback
 
