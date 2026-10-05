@@ -52,17 +52,17 @@ jobs:
 
 
   build_and_push_docker:
-    needs: test_and_build
-    if: github.event_name == 'push'
+    needs: test_and_buildgit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
       - name: Build Docker image
-        run: docker build \
-          -t ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:latest \
-          -t ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:${{github.sha}} .
+        run: |
+          docker build \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:latest \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:${{github.sha}} .
 
       - name: Log in to Docker Hub
         if: github.event_name == 'push'
@@ -72,8 +72,9 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push Docker image
+        if: github.event_name == 'push'
         run: | 
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:latest \
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:latest
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:${{github.sha}}
 
 #      - name: Start the whole system with docker
