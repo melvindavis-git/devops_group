@@ -91,7 +91,7 @@ jobs:
       RAILWAY_TOKEN_STAGING: ${{secrets.RAILWAY_TOKEN_STAGING}}
     steps:
       - uses: actions/checkout@V7
-      - run: railway up --service=${{SERVICE}} --environment=staging --yes
+      - run: railway up --service=${{env.SERVICE}} --environment=staging --yes
 
 
   tag-release:
@@ -105,10 +105,10 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/railwayapp/cli:latest
     env:
-      SVC_ID: devops_group
-      RAILWAY_TOKEN_STAGING: ${{secrets.RAILWAY_TOKEN_PRODUSCTION}}
+     SERVICE: devops_group
+     RAILWAY_TOKEN_STAGING: ${{secrets.RAILWAY_TOKEN_PRODUSCTION}}
     steps:
       - uses: actions/checkout@V7
-      - run: railway up --service=${{env.SVC_ID}} --environment=production --yes
+      - run: railway up --service=${{env.SERVICE}} --environment=production --yes
 
 
