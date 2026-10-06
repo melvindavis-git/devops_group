@@ -105,10 +105,10 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/railwayapp/cli:latest
     env:
-      SERVICE: devops_group
+      SVC_ID: devops_group
       RAILWAY_TOKEN_STAGING: ${{secrets.RAILWAY_TOKEN_PRODUSCTION}}
     steps:
       - uses: actions/checkout@V7
-      - run: railway up --service=${{env.SERVICE}} --environment=production --yes
+      - run: railway up --service=${{env.SVC_ID}} --environment=production --yes
 
 
