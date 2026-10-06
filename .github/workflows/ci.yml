@@ -3,11 +3,16 @@ name: CI
 on:
   push:
     branches: [ master ]
+    tags: ['v*']
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: read
+
 jobs:
   test_and_build:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
     runs-on: ${{matrix.os}}
     strategy:
       fail-fast: false
@@ -31,9 +36,9 @@ jobs:
           --health-retries=10
 
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v7
+
       - name: Set up java environment
         uses: actions/setup-java@v6
         with:
@@ -62,6 +67,7 @@ jobs:
         run: |
           docker build \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:latest \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:staging \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:${{github.sha}} .
 
       - name: Log in to Docker Hub
@@ -75,12 +81,49 @@ jobs:
         if: github.event_name == 'push'
         run: | 
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:staging
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/devops_group:${{github.sha}}
 
-#      - name: Start the whole system with docker
-#        run: docker compose up -d --build
-#
-#      - name: Wait for everything to start
-#        run: sleep 20
+  deploy-to-staging:
+    needs: build_and_push_docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
+    env:
+      SERVICE: devops_group
+      RAILWAY_TOKEN_STAGING: ${{secrets.RAILWAY_TOKEN_STAGING}}
+    steps:
+      - uses: actions/checkout@V7
+      - run: railway up --service=${{env.SERVICE}} --environment=staging --yes
 
-        # When not using test containers:
+
+  tag-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_PASSWORD}}
+
+      - name: Tagging image with production
+        run: |
+          docker buildx imagetools create \
+            -t mndavis/devops_group:production \
+            -t mndavis/devops_group:${{github.ref_name}} \
+             mndavis/devops_group:${{github.sha}}
+     
+
+  deploy-toproduction:
+    needs: tag-release
+    runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
+    env:
+     SERVICE: devops_group
+     RAILWAY_TOKEN_STAGING: ${{secrets.RAILWAY_TOKEN_PRODUSCTION}}
+    steps:
+      - uses: actions/checkout@V7
+      - run: railway up --service=${{env.SERVICE}} --environment=production --yes
+
+
