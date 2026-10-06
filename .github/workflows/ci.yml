@@ -109,6 +109,6 @@ jobs:
       RAILWAY_TOKEN_STAGING: ${{secrets.RAILWAY_TOKEN_PRODUSCTION}}
     steps:
       - uses: actions/checkout@V7
-      - run: railway up --service=${{SERVICE}} --environment=production --yes
+      - run: railway up --service=${{env.SERVICE}} --environment=production --yes
 
 
