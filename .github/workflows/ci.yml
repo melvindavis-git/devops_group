@@ -91,7 +91,7 @@ jobs:
     container: ghcr.io/railwayapp/cli:latest
     env:
       SERVICE: devops_group
-      RAILWAY_TOKEN_STAGING: ${{secrets.RAILWAY_TOKEN_STAGING}}
+      RAILWAY_TOKEN: ${{secrets.RAILWAY_TOKEN_STAGING}}
     steps:
       - uses: actions/checkout@v7
       - run: railway up --service=${{env.SERVICE}} --environment=staging --yes
@@ -121,7 +121,7 @@ jobs:
     container: ghcr.io/railwayapp/cli:latest
     env:
      SERVICE: devops_group
-     RAILWAY_TOKEN_STAGING: ${{secrets.RAILWAY_TOKEN_PRODUSCTION}}
+     RAILWAY_TOKEN: ${{secrets.RAILWAY_TOKEN_PRODUSCTION}}
     steps:
       - uses: actions/checkout@v7
       - run: railway up --service=${{env.SERVICE}} --environment=production --yes
