@@ -93,7 +93,7 @@ jobs:
       SERVICE: devops_group
       RAILWAY_TOKEN_STAGING: ${{secrets.RAILWAY_TOKEN_STAGING}}
     steps:
-      - uses: actions/checkout@V7
+      - uses: actions/checkout@v7
       - run: railway up --service=${{env.SERVICE}} --environment=staging --yes
 
 
@@ -123,7 +123,7 @@ jobs:
      SERVICE: devops_group
      RAILWAY_TOKEN_STAGING: ${{secrets.RAILWAY_TOKEN_PRODUSCTION}}
     steps:
-      - uses: actions/checkout@V7
+      - uses: actions/checkout@v7
       - run: railway up --service=${{env.SERVICE}} --environment=production --yes
 
 
