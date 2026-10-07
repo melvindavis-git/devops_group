@@ -2,10 +2,11 @@
 
 ## Environments
 
-| Environment | URL |
-|-------------|-----|
-| Staging | https://devopsgroup-staging.up.railway.app/ |
-| Production | https://devopsgroup-production.up.railway.app/ |
+| Environment | URL                              |
+|-------------|----------------------------------|
+| Staging     | https://devops-staging.2wall.se/ |
+| Production  | https://devops.2wall.se/         |
+|             | Hosted on railway.               |
 
 ## Branch Strategy
 
@@ -38,4 +39,11 @@ incoming changes.
 
 ## Rollback
 
-> **TODO:** Add information about how we handle rollbacks.
+To roll back (or forward):
+1. Navigate into the repository.
+2. Navigate into **Actions** on top bar.
+3. Click **Manual deployment** from bar to the left.
+4. Click **Run workflow** dropdown.
+5. Select environment (production/staging) to roll back/forward.
+6. Select which image to deploy, using **SHA or TAG**.
+7. **Run Workflow** and make sure it deploys.
