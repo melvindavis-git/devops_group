@@ -1,0 +1,4 @@
+name: manual-deploy.yml
+on:
+
+jobs:
