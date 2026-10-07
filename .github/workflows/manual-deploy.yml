@@ -34,6 +34,7 @@ jobs:
              mndavis/devops_group:${{inputs.image}}
 
   deploy:
+    needs: switch-tag
     runs-on: ubuntu-latest
     container: ghcr.io/railwayapp/cli:latest
     env:
