@@ -22,7 +22,7 @@ public class CustomerHealth implements HealthIndicator {
             return Health.up().
                     withDetail("customerService", "Available").build();
         } catch (Exception e) {
-            return Health.down().
+            return Health.unknown().
                     withDetail("customerService", "Unavailable").
                     withDetail("error", e.getMessage()).build();
         }
