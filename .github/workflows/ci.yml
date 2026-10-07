@@ -115,7 +115,7 @@ jobs:
              mndavis/devops_group:${{github.sha}}
      
 
-  deploy-toproduction:
+  deploy-top-roduction:
     needs: tag-release
     runs-on: ubuntu-latest
     container: ghcr.io/railwayapp/cli:latest
