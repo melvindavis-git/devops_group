@@ -41,5 +41,5 @@ jobs:
       SERVICE: devops_group
       RAILWAY_TOKEN: ${{inputs.environment == 'production' && secrets.RAILWAY_TOKEN_PRODUCTION || secrets.RAILWAY_TOKEN_STAGING}}
     steps:
-      - uses: actions/checkout@7
+      - uses: actions/checkout@v7
       - run: railway up --service=${{env.SERVICE}} --environment=${{inputs.environment}} --yes
