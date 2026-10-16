@@ -124,6 +124,6 @@ jobs:
      RAILWAY_TOKEN: ${{secrets.RAILWAY_TOKEN_PRODUCTION}}
     steps:
       - uses: actions/checkout@v7
-      - run: railway up --service=${{env.SERVICE}} --environment=production --yes
+      - run: railway redeploy --service=${{env.SERVICE}} --environment=production --yes
 
 
